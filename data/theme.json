@@ -1,0 +1,27 @@
+{
+    "defaults":
+    {
+        "colours":
+        {
+            "normal_bg":"#1e1e1e",
+            "dark_bg":"#1e1e1e",
+            "hovered_bg":"#303030",
+            "selected_bg":"#005000",
+            "active_bg":"#002800",
+
+            "normal_border":"#787878",
+            "active_border":"#787878",
+
+            "normal_text":"#c8c8c8",
+            "selected_text":"#c8c8c8",
+            "disabled_text":"#c80000"
+        }
+    },
+    "label":
+    {
+        "colours":
+        {
+            "dark_bg":"#1e1e1e"
+        }
+    }
+}
