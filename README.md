@@ -17,17 +17,19 @@ A Snake game programmed in python. I made this to get used to pygame before the 
   - Support for Xbox and Playstation controllers
 
 ## Download
-A Windows executable (exe) is available on [Itch.io](https://psycho-pattt.itch.io/snake)
+A Windows executable (exe) is available on [Itch.io](https://psycho-pattt.itch.io/snake). You can also build Linux and MacOS executables using the source code and pyInstaller.
 
 ## Project setup
 To set up the project, you need `Python 3` as well as `pip`.
 
-1. Install the required packages
+1. Download the project
+
+2. Install the required packages
 ```cmd
 pip install -r requirements.txt
 ```
 
-2. Run the project
+3. Run the project
 ```cmd
 py scripts/main.py
 ```
