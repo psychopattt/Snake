@@ -152,10 +152,11 @@ class Snake:
                 self.game.TriggerGameOver(False)
 
     def CheckBodyCollide(self):
-        for i in range(2, len(self.segments)):
-            if (self.segments[0] == self.segments[i]):
-                self.game.TriggerGameOver(False)
-                break
+        try:
+            self.segments.index(self.GetHeadPosition(), 1)
+            self.game.TriggerGameOver(False)
+        except ValueError:
+            pass # No collision
 
     def CheckWallCollide(self):
         if (self.GetHeadPosition() in self.walls.GetPositions()):
