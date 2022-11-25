@@ -64,6 +64,16 @@ class Snake:
 
         self.game.CheckVictory() # Check if everything is snake and walls
 
+    def TeleportHead(self):
+        availablePos = self.game.GetAvailablePos()
+        availablePosCount = len(availablePos)
+        
+        if (availablePosCount > 5):
+            self.game.AddAvailablePos(self.GetHeadPosition())
+            selectedPos = list(availablePos[randrange(0, availablePosCount)])
+            self.segments[0] = selectedPos
+            self.SetHeadPositionUnavailable()
+
     def EatAvailableSnack(self, snacks, snakeHeadsPositions):
         snacksPos = snacks.GetPositions()
 
@@ -73,14 +83,7 @@ class Snake:
 
             if (not self.gameOver):
                 if (self.teleportHead):
-                    availablePos = self.game.GetAvailablePos()
-                    availablePosCount = len(availablePos)
-                    
-                    if (availablePosCount > 5):
-                        self.game.AddAvailablePos(self.GetHeadPosition())
-                        selectedPos = list(availablePos[randrange(0, availablePosCount)])
-                        self.segments[0] = selectedPos
-                        self.SetHeadPositionUnavailable()
+                    self.TeleportHead()
 
                 snacks.Place(indexOfEatenSnack)
 
@@ -94,23 +97,26 @@ class Snake:
         for i in range(len(self.segments) - 1, 0, -1):
             self.segments[i] = list(self.segments[i - 1])
 
+    def MoveAiHead(self):
+        if (self.nextDirection is not None):
+            self.direction = self.nextDirection
+            self.nextDirection = None
+        else:
+            if (self.segments[0][1] == 0): # Upper tile is border
+                self.direction = K_LEFT
+                self.nextDirection = K_DOWN
+            elif (self.segments[0][0] + 1 >= self.gridWidth): # Right tile is border
+                self.direction = K_UP
+            elif (self.segments[0][1] + 2 == self.gridHeight): # Down down tile is border
+                if (self.segments[0][0] == 0): # Left tile is border
+                    self.nextDirection = K_RIGHT
+                else:
+                    self.direction = K_LEFT
+                    self.nextDirection = K_UP
+
     def MoveHead(self):
         if (self.usingAI):
-            if (self.nextDirection is not None):
-                self.direction = self.nextDirection
-                self.nextDirection = None
-            else:
-                if (self.segments[0][1] == 0): # Upper tile is border
-                    self.direction = K_LEFT
-                    self.nextDirection = K_DOWN
-                elif (self.segments[0][0] + 1 >= self.gridWidth): # Right tile is border
-                    self.direction = K_UP
-                elif (self.segments[0][1] + 2 == self.gridHeight): # Down down tile is border
-                    if (self.segments[0][0] == 0): # Left tile is border
-                        self.nextDirection = K_RIGHT
-                    else:
-                        self.direction = K_LEFT
-                        self.nextDirection = K_UP
+            self.MoveAiHead()
 
         # Keep current direction if next direction is invalid
         elif (self.nextDirection in DIRECTION_TOP and self.direction not in DIRECTION_DOWN or 
@@ -130,22 +136,33 @@ class Snake:
 
         self.SetHeadPositionUnavailable()
 
+    def LoopHeadAroundBorder(self):
+        if (self.segments[0][0] < 0):
+            self.segments[0][0] = self.gridWidth - 1
+            self.SetHeadPositionUnavailable()
+        elif (self.segments[0][0] >= self.gridWidth):
+            self.segments[0][0] = 0
+            self.SetHeadPositionUnavailable()
+        elif (self.segments[0][1] < 0):
+            self.segments[0][1] = self.gridHeight - 1
+            self.SetHeadPositionUnavailable()
+        elif (self.segments[0][1] >= self.gridHeight):
+            self.segments[0][1] = 0
+            self.SetHeadPositionUnavailable()
+
+    def IsHeadOutOfBounds(self):
+        return (
+            self.segments[0][0] < 0 or
+            self.segments[0][0] >= self.gridWidth or
+            self.segments[0][1] < 0 or
+            self.segments[0][1] >= self.gridHeight
+        )
+
     def CheckBorderCollide(self):
         if (self.loopAround):
-            if (self.segments[0][0] < 0):
-                self.segments[0][0] = self.gridWidth - 1
-                self.SetHeadPositionUnavailable()
-            elif (self.segments[0][0] >= self.gridWidth):
-                self.segments[0][0] = 0
-                self.SetHeadPositionUnavailable()
-            elif (self.segments[0][1] < 0):
-                self.segments[0][1] = self.gridHeight - 1
-                self.SetHeadPositionUnavailable()
-            elif (self.segments[0][1] >= self.gridHeight):
-                self.segments[0][1] = 0
-                self.SetHeadPositionUnavailable()
+            self.LoopHeadAroundBorder()
 
-        elif (self.segments[0][0] < 0 or self.segments[0][0] >= self.gridWidth or self.segments[0][1] < 0 or self.segments[0][1] >= self.gridHeight):
+        elif (self.IsHeadOutOfBounds()):
             if (self.multipleSnakes):
                 self.game.KillSnake(self, True)
             else:
@@ -185,6 +202,7 @@ class Snake:
         
         if (self.blockGap == 1):
             gapX = self.blockGap * 2
+            
             if (self.segments[index - 1][1] + 1 == self.segments[index][1]): # Previous segment is over
                 posY = -1
                 gapY = 0

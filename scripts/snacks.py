@@ -21,7 +21,7 @@ class Snacks:
             if (availablePosCount > 0):
                 selectedPos = list(availablePos[randrange(0, availablePosCount)])
                 self.snackPos.append(selectedPos)
-                availablePos.remove(selectedPos)
+                self.game.RemoveAvailablePos(selectedPos)
             else:
                 break
 
