@@ -13,7 +13,7 @@ A Snake game programmed in python. I made this to get used to pygame before the 
   - Increase speed: each time a snake eats a piece of food, the time between snake movements is reduced
   - Teleport head: each time a snake eats a piece of food, it's head is teleported somewhere on the board
 - Local multiplayer
-  - Up to 16 players
+  - Up to 64 players
   - Support for Xbox and Playstation controllers
 
 ## Download
