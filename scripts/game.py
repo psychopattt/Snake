@@ -1,19 +1,19 @@
 from pygame import display, time, font, event as events, joystick, mouse
 from pygame.constants import QUIT, JOYBUTTONDOWN, KEYDOWN, K_DOWN, K_ESCAPE, K_LEFT, K_RIGHT, K_UP, K_p
-from constants import BG_COLOR, TEXT_COLOR, SNAKE_DIRECTION_INPUTS, GAME_INPUT_FPS
-from math import floor
+from constants import BG_COLOR, TEXT_COLOR, SNAKE_DIRECTION_INPUTS, GAME_INPUT_FPS, SNAKE_COLORS_16, SNAKE_COLORS_64
+from math import floor, sqrt
 from background import Background
 from snake import Snake
 from snacks import Snacks
 from walls import Walls
 
 class Game:
-    def __init__(self, gridWidth, gridHeight, blockSize, frametime, nbSnacks, nbPlayers, loopAround, spawnWalls, teleportHead, increaseSpeed, useAI, basePath, window):
+    def __init__(self, gridWidth, gridHeight, blockSize, frametime, nbSnacks, nbPlayers, loopAround, spawnWalls, teleportHead, increaseSpeed, useAi, basePath, window):
         self.frametime = frametime
-        self.usingAI = useAI
+        self.usingAI = useAi
         self.window = window
 
-        if (useAI):
+        if (useAi):
             nbPlayers = 1
             spawnWalls = False
             teleportHead = False
@@ -22,12 +22,12 @@ class Game:
         else:
             if (nbPlayers < 1):
                 nbPlayers = 1
-            elif (nbPlayers > 16):
-                nbPlayers = 16
+            elif (nbPlayers > 64):
+                nbPlayers = 64
 
         if (nbPlayers > 1):
-            self.gridWidth = gridWidth if (gridWidth > 9) else 10
-            self.gridHeight = gridHeight if (gridHeight > 9) else 10
+            self.gridWidth = gridWidth if (gridWidth > 7) else 8
+            self.gridHeight = gridHeight if (gridHeight > 7) else 8
         else:
             self.gridWidth = gridWidth if (gridWidth > 2) else 3
             self.gridHeight = gridHeight if (gridHeight > 2) else 3
@@ -73,26 +73,57 @@ class Game:
         self.fontH1 = font.Font(self.fontName, 55)
 
         self.nbSnakes = nbPlayers
-        self.snakes = []
-        self.aliveSnakes = []
-
-        if (self.nbSnakes == 1):
-            self.aliveSnakes.append(0)
-            snakeStartPos = [floor(self.gridWidth / 2) - 1, floor(self.gridHeight / 2)] # Head starts centered
-            self.snakes.append(Snake(self, 0, self.width, self.height, self.gridWidth, self.gridHeight, snakeStartPos, blockSize, blockGap, False, loopAround, self.walls, teleportHead, increaseSpeed, useAI))
-        else:
-            incrementX = floor(self.gridWidth / 4)
-            incrementY = floor(self.gridHeight / 4)
-
-            for i in range(self.nbSnakes):
-                self.aliveSnakes.append(i)
-                snakeStartPos = [floor(i / 4) * incrementX, i % 4 * incrementY + 1]
-                self.snakes.append(Snake(self, i, self.width, self.height, self.gridWidth, self.gridHeight, snakeStartPos, blockSize, blockGap, True, loopAround, self.walls, teleportHead, increaseSpeed, useAI))
+        snakeParameters = {
+            "width": self.width, "height": self.height,
+            "gridWidth": self.gridWidth, "gridHeight": self.gridHeight,
+            "blockSize": blockSize, "blockGap": blockGap,
+            "loopAround": loopAround, "teleportHead": teleportHead,
+            "increaseSpeed": increaseSpeed, "useAi": useAi,
+            "walls": self.walls, "game": self,
+            "snakeColors": SNAKE_COLORS_16.copy() if nbPlayers < 17 else SNAKE_COLORS_64.copy()
+        }
+        
+        self.CreateSnakes(snakeParameters)
 
         snacks = Snacks(self, blockSize, blockGap, nbSnacks)
         self.background = Background(self.gridWidth, self.gridHeight, blockSize)
 
         self.Run(screen, clock, self.snakes, snacks, self.walls)
+
+    def CreateSingleSnake(self, id, snakeStartPos, multipleSnakes, snakeParameters):
+        self.aliveSnakes.append(id)
+        self.snakes.append(Snake(id, snakeStartPos, multipleSnakes, snakeParameters))
+
+    def CreateMultipleSnakes(self, snakeParameters):
+        # incrementX = floor(self.gridWidth / 4)
+        # incrementY = floor(self.gridHeight / 4)
+
+        # for i in range(self.nbSnakes):
+        #     snakeStartPos = [floor(i / 4) * incrementX, i % 4 * incrementY + 1]
+        #     self.CreateSingleSnake(i, snakeStartPos, True, snakeParameters)
+
+        incrementY = self.gridHeight / sqrt(self.nbSnakes)
+        incrementX = self.gridWidth / sqrt(self.nbSnakes)
+        posX = 0
+        posY = 0
+
+        for snakeId in range(self.nbSnakes):
+            self.CreateSingleSnake(snakeId, [floor(posX), floor(posY)], True, snakeParameters)
+            posY += incrementY
+
+            if (posY >= self.gridHeight):
+                posX += incrementX
+                posY = 0
+
+    def CreateSnakes(self, snakeParameters):
+        self.snakes = []
+        self.aliveSnakes = []
+
+        if (self.nbSnakes == 1):
+            snakeStartPos = [floor(self.gridWidth / 2) - 1, floor(self.gridHeight / 2)] # Head starts centered
+            self.CreateSingleSnake(0, snakeStartPos, False, snakeParameters)
+        else:
+            self.CreateMultipleSnakes(snakeParameters)
 
     def CenterWindow(self):
         screenWidth, screenHeight = display.get_desktop_sizes()[0]

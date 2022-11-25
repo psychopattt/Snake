@@ -65,7 +65,7 @@ class Menu:
         self.txtNbSnacks.set_text(str(DEFAULT_NB_SNACKS))
         self.txtNbSnacks.set_allowed_characters("numbers")
 
-        elements.UILabel(relative_rect=Rect((SIZE_X - 250, 290), (200, 20)), text="Players (1 - 16)", manager=uiManager)
+        elements.UILabel(relative_rect=Rect((SIZE_X - 250, 290), (200, 20)), text="Players (1 - 64)", manager=uiManager)
         self.txtNbPlayers = elements.UITextEntryLine(relative_rect=Rect((SIZE_X - 250, 310), (200, 30)), manager=uiManager)
         self.txtNbPlayers.set_text(str(DEFAULT_NB_PLAYERS))
         self.txtNbPlayers.set_allowed_characters("numbers")

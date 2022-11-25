@@ -1,32 +1,30 @@
 from pygame import draw
 from pygame.constants import K_DOWN, K_LEFT, K_RIGHT, K_UP
-from constants import HEAD_COLORS, DIRECTION_TOP, DIRECTION_DOWN, DIRECTION_LEFT, DIRECTION_RIGHT
+from constants import DIRECTION_TOP, DIRECTION_DOWN, DIRECTION_LEFT, DIRECTION_RIGHT
 from colorsys import hsv_to_rgb
 from random import randrange
 
 class Snake:
-    def __init__(self, game, id, width, height, gridWidth, gridHeight, startPos, blockSize, blockGap, multipleSnakes, loopAround, walls, teleportHead, increaseSpeed, useAI):
-        self.game = game
+    def __init__(self, id, startPos, multipleSnakes, snakeParameters):
         self.id = id
-        self.width = width
-        self.gridWidth = gridWidth
-        self.gridHeight = gridHeight
-        self.height = height
-        self.blockSize = blockSize
-        self.blockGap = blockGap
-        self.multipleSnakes = multipleSnakes
-        self.loopAround = loopAround
-        self.walls = walls
-        self.teleportHead = teleportHead
-        self.increaseSpeed = increaseSpeed
-        self.usingAI = useAI
-
         self.gameOver = False
+        self.multipleSnakes = multipleSnakes
+        self.game = snakeParameters["game"]
+        self.width = snakeParameters["width"]
+        self.height = snakeParameters["height"]
+        self.gridWidth = snakeParameters["gridWidth"]
+        self.gridHeight = snakeParameters["gridHeight"]
+        self.blockSize = snakeParameters["blockSize"]
+        self.blockGap = snakeParameters["blockGap"]
+        self.loopAround = snakeParameters["loopAround"]
+        self.teleportHead = snakeParameters["teleportHead"]
+        self.increaseSpeed = snakeParameters["increaseSpeed"]
+        self.usingAi = snakeParameters["useAi"]
+        self.walls = snakeParameters["walls"]
+        self.snakeColors = snakeParameters["snakeColors"]
 
-        if (teleportHead and not multipleSnakes):
-            HEAD_COLORS[0] = (111, 17, 17)
-        else:
-            HEAD_COLORS[0] = (40, 111, 17)
+        if (self.teleportHead and not multipleSnakes):
+            self.snakeColors[0] = (111, 17, 17)
 
         self.direction = K_RIGHT
         self.nextDirection = K_RIGHT
@@ -115,7 +113,7 @@ class Snake:
                     self.nextDirection = K_UP
 
     def MoveHead(self):
-        if (self.usingAI):
+        if (self.usingAi):
             self.MoveAiHead()
 
         # Keep current direction if next direction is invalid
@@ -220,7 +218,7 @@ class Snake:
 
     def DrawHead(self, screen):
         # screen, color(r, g, b), rect(posX, posY, width, height)
-        draw.rect(screen, HEAD_COLORS[self.id], (self.segments[0][0] * self.blockSize + self.blockGap, self.segments[0][1] * self.blockSize + self.blockGap, self.blockSize - (self.blockGap * 2), self.blockSize - (self.blockGap * 2)))
+        draw.rect(screen, self.snakeColors[self.id], (self.segments[0][0] * self.blockSize + self.blockGap, self.segments[0][1] * self.blockSize + self.blockGap, self.blockSize - (self.blockGap * 2), self.blockSize - (self.blockGap * 2)))
 
     def DrawBodySegment(self, screen, color, posX, posY, segmentOffsets):
         draw.rect(screen, color, (posX * self.blockSize + segmentOffsets[0], posY * self.blockSize + segmentOffsets[1], self.blockSize - segmentOffsets[2], self.blockSize - segmentOffsets[3]))
@@ -229,7 +227,7 @@ class Snake:
         if (self.multipleSnakes):
             for i in range(1, len(self.segments)):
                 segmentOffsets = self.ComputeDrawPos(i)
-                self.DrawBodySegment(screen, HEAD_COLORS[self.id], self.segments[i][0], self.segments[i][1], segmentOffsets)
+                self.DrawBodySegment(screen, self.snakeColors[self.id], self.segments[i][0], self.segments[i][1], segmentOffsets)
         else:
             for i in range(1, len(self.segments)):
                 segmentOffsets = self.ComputeDrawPos(i)
@@ -237,5 +235,5 @@ class Snake:
                 self.DrawBodySegment(screen, color, self.segments[i][0], self.segments[i][1], segmentOffsets)
 
     def Draw(self, screen):
-        self.DrawHead(screen)
         self.DrawBody(screen)
+        self.DrawHead(screen)
