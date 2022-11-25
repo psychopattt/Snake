@@ -67,29 +67,28 @@ class Snake:
     def EatAvailableSnack(self, snacks, snakeHeadsPositions):
         snacksPos = snacks.GetPositions()
 
-        for i in range(len(snacksPos)):
-            if (self.GetHeadPosition() == snacksPos[i]):
-                self.Grow()
+        try:
+            indexOfEatenSnack = snacksPos.index(self.GetHeadPosition())
+            self.Grow()
 
-                if (not self.gameOver):
-                    if (self.teleportHead):
-                        availablePos = self.game.GetAvailablePos()
-                        availablePosCount = len(availablePos)
-                        
-                        if (availablePosCount > 5):
-                            self.game.AddAvailablePos(self.GetHeadPosition())
-                            selectedPos = list(availablePos[randrange(0, availablePosCount)])
-                            self.segments[0] = selectedPos
-                            self.SetHeadPositionUnavailable()
+            if (not self.gameOver):
+                if (self.teleportHead):
+                    availablePos = self.game.GetAvailablePos()
+                    availablePosCount = len(availablePos)
+                    
+                    if (availablePosCount > 5):
+                        self.game.AddAvailablePos(self.GetHeadPosition())
+                        selectedPos = list(availablePos[randrange(0, availablePosCount)])
+                        self.segments[0] = selectedPos
+                        self.SetHeadPositionUnavailable()
 
-                    snacks.Place(i)
+                snacks.Place(indexOfEatenSnack)
                 
-                return
-
-        # If the tail is not replaced by a snake head
-        if (self.nextSegmentPos not in snakeHeadsPositions):
-            # No snack eaten, the position reserved for it's next segment is freed
-            self.SetNextSegmentPosAvailable()
+        except ValueError: # No snack was eaten
+            # If the tail is not replaced by a snake head
+            if (self.nextSegmentPos not in snakeHeadsPositions):
+                # No snack eaten, the position reserved for it's next segment is freed
+                self.SetNextSegmentPosAvailable()
 
     def MoveBody(self):
         for i in range(len(self.segments) - 1, 0, -1):
