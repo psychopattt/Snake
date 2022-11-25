@@ -257,11 +257,21 @@ class Game:
 
     def IncreaseSpeed(self): # Goes up to 8x faster
         self.frametime = max(self.minFrametime, self.frametime - max(1, round(self.frametime / 50)))
-        
+    
+    def DrawFirstFrame(self, screen, snacks, snakes):
+        self.background.Draw(screen)
+        snacks.Draw(screen)
+
+        for i in range(self.nbSnakes):
+            snakes[i].Draw(screen)
+
+        display.update()
+
     def Run(self, screen, clock, snakes, snacks, walls):
         self.playing = True
         self.paused = False
-        lastGameUpdate = 0
+        self.DrawFirstFrame(screen, snacks, snakes)
+        lastGameUpdate = time.get_ticks()
 
         while self.playing:
             for event in events.get():
