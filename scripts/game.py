@@ -145,8 +145,8 @@ class Game:
 
         score = 0
         
-        for i in range(self.nbSnakes):
-            score += len(snakes[i].GetPositions())
+        for snake in snakes:
+            score += len(snake.GetPositions())
 
         text = font.Font(self.fontName, 45).render("Score: " + str(score), True, TEXT_COLOR, BG_COLOR)
         textRect = text.get_rect(center = (self.width / 2, self.height / 2 + 30))
@@ -175,28 +175,35 @@ class Game:
     def GetAvailablePos(self):
         return self.availablePos
 
-    def CheckSnakesCollisions(self):
-        checkedPos = []
-        deadPos = []
+    def CheckLivingSnakesCollisions(self):
+        checkedPositions = []
+        deadSnakePositions = []
 
         for i in range(self.nbSnakes):
             currentSnake = self.snakes[i]
 
-            for pos in currentSnake.GetPositions():
-                if pos in checkedPos:
-                    deadPos.append(pos)
+            for position in currentSnake.GetPositions():
+                if position in checkedPositions:
+                    deadSnakePositions.append(position)
                     self.KillSnake(currentSnake, False)
                 else:
-                    checkedPos.append(pos)
+                    checkedPositions.append(position)
 
+        return deadSnakePositions
+
+    def CheckDeadSnakesCollisions(self, deadSnakePositions):
         for i in range(len(self.aliveSnakes)):
             if (i < len(self.aliveSnakes)):
                 currentSnake = self.snakes[self.aliveSnakes[i]]
 
-                for pos in currentSnake.GetPositions():
-                    if (pos in deadPos):
+                for position in currentSnake.GetPositions():
+                    if (position in deadSnakePositions):
                         self.KillSnake(currentSnake, False)
                         break
+
+    def CheckSnakesCollisions(self):
+        deadSnakePositions = self.CheckLivingSnakesCollisions()
+        self.CheckDeadSnakesCollisions(deadSnakePositions)
 
     def KillSnake(self, snake, objectCollision):
         if (snake.id in self.aliveSnakes):
