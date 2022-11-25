@@ -21,7 +21,7 @@ class Game:
             gridWidth = gridWidth if (gridWidth % 2 == 0) else gridWidth + 1
         else:
             if (nbPlayers < 1):
-                nbPlayers = 1 
+                nbPlayers = 1
             elif (nbPlayers > 16):
                 nbPlayers = 16
 
@@ -39,12 +39,15 @@ class Game:
         self.height = self.gridHeight * blockSize
 
         self.gameOver = False
+        self.InitAvailablePos()
 
         blockGap = 0 if (blockSize < 8) else 1
         maxNbSnacks = self.gridWidth * self.gridHeight - 1
 
         if (nbSnacks > maxNbSnacks):
             nbSnacks = maxNbSnacks
+        elif (nbSnacks < 1):
+            nbSnacks = 1
 
         if (spawnWalls):
             self.walls = Walls(self, blockSize, blockGap)
@@ -72,25 +75,22 @@ class Game:
         self.nbSnakes = nbPlayers
         self.snakes = []
         self.aliveSnakes = []
-        snakesStartPos = []
 
         if (self.nbSnakes == 1):
             self.aliveSnakes.append(0)
-            snakesStartPos.append([floor(self.gridWidth / 2) - 1, floor(self.gridHeight / 2)]) # Head starts centered
-            self.snakes.append(Snake(self, 0, self.width, self.height, self.gridWidth, self.gridHeight, snakesStartPos[0], blockSize, blockGap, False, loopAround, self.walls, teleportHead, increaseSpeed, useAI))
+            snakeStartPos = [floor(self.gridWidth / 2) - 1, floor(self.gridHeight / 2)] # Head starts centered
+            self.snakes.append(Snake(self, 0, self.width, self.height, self.gridWidth, self.gridHeight, snakeStartPos, blockSize, blockGap, False, loopAround, self.walls, teleportHead, increaseSpeed, useAI))
         else:
             incrementX = floor(self.gridWidth / 4)
             incrementY = floor(self.gridHeight / 4)
 
             for i in range(self.nbSnakes):
                 self.aliveSnakes.append(i)
-                snakesStartPos.append([floor(i / 4) * incrementX, i % 4 * incrementY + 1])
-                self.snakes.append(Snake(self, i, self.width, self.height, self.gridWidth, self.gridHeight, snakesStartPos[i], blockSize, blockGap, True, loopAround, self.walls, teleportHead, increaseSpeed, useAI))
-
-        self.InitAvailablePos(snakesStartPos)
+                snakeStartPos = [floor(i / 4) * incrementX, i % 4 * incrementY + 1]
+                self.snakes.append(Snake(self, i, self.width, self.height, self.gridWidth, self.gridHeight, snakeStartPos, blockSize, blockGap, True, loopAround, self.walls, teleportHead, increaseSpeed, useAI))
 
         snacks = Snacks(self, blockSize, blockGap, nbSnacks)
-        self.background = Background(gridWidth, gridHeight, blockSize)
+        self.background = Background(self.gridWidth, self.gridHeight, blockSize)
 
         self.Run(screen, clock, self.snakes, snacks, self.walls)
 
@@ -161,29 +161,16 @@ class Game:
         display.update()
         self.paused = True
 
-    def InitAvailablePos(self, snakesStartPos):
-        self.availablePos = []
-
-        for y in range(self.gridHeight):
-            for x in range(self.gridWidth):
-                if ([x, y] not in snakesStartPos):
-                    self.availablePos.append([x, y])
-
-    def GenerateAvailablePos(self, snakes, snacks, walls):
-        self.availablePos.clear()
-        allSnakePos = []
-
-        for i in range(self.nbSnakes):
-            allSnakePos += snakes[i].GetPositions()
-
-        for y in range(self.gridHeight):
-            for x in range(self.gridWidth):
-                if ([x, y] not in allSnakePos and [x, y] not in snacks.GetPositions() and (walls is None or [x, y] not in walls.GetPositions())):
-                    self.availablePos.append([x, y])
+    def InitAvailablePos(self):
+        self.availablePos = [[i, j] for i in range(self.gridWidth) for j in range(self.gridHeight)]
 
     def RemoveAvailablePos(self, pos):
         if (pos in self.availablePos):
             self.availablePos.remove(pos)
+
+    def AddAvailablePos(self, pos):
+        if (pos not in self.availablePos):
+            self.availablePos.append(pos)
 
     def GetAvailablePos(self):
         return self.availablePos
@@ -193,26 +180,42 @@ class Game:
         deadPos = []
 
         for i in range(self.nbSnakes):
-            for pos in self.snakes[i].GetPositions():
+            currentSnake = self.snakes[i]
+
+            for pos in currentSnake.GetPositions():
                 if pos in checkedPos:
                     deadPos.append(pos)
-                    self.KillSnake(i)
+                    self.KillSnake(currentSnake, False)
                 else:
                     checkedPos.append(pos)
 
         for i in range(len(self.aliveSnakes)):
             if (i < len(self.aliveSnakes)):
-                for pos in self.snakes[self.aliveSnakes[i]].GetPositions():
+                currentSnake = self.snakes[self.aliveSnakes[i]]
+
+                for pos in currentSnake.GetPositions():
                     if (pos in deadPos):
-                        self.KillSnake(self.aliveSnakes[i])
+                        self.KillSnake(currentSnake, False)
                         break
 
-    def KillSnake(self, snakeId):
-        if (snakeId in self.aliveSnakes):
-            self.aliveSnakes.remove(snakeId)
+    def KillSnake(self, snake, objectCollision):
+        if (snake.id in self.aliveSnakes):
+            self.aliveSnakes.remove(snake.id)
+
+            if (objectCollision):
+                snake.SetNextSegmentPosAvailable()
             
             if (len(self.aliveSnakes) == 0):
                 self.TriggerGameOver(False)
+
+    def MakeSnakesEat(self, snakes, snacks):
+        snakeHeadsPositions = []
+
+        for i in range(len(self.aliveSnakes)):
+            snakeHeadsPositions.append(snakes[self.aliveSnakes[i]].GetHeadPosition())
+
+        for i in range(len(self.aliveSnakes)):
+            snakes[self.aliveSnakes[i]].EatAvailableSnack(snacks, snakeHeadsPositions)
 
     def IncreaseSpeed(self): # Goes up to 8x faster
         self.frametime = max(self.minSpeed, self.frametime - max(1, round(self.frametime / 50)))
@@ -271,21 +274,18 @@ class Game:
                     if (i < len(self.aliveSnakes)): # Dead snakes might change the max index
                         snakes[self.aliveSnakes[i]].Move()
 
-                self.GenerateAvailablePos(snakes, snacks, walls)
-
-                for i in range(len(self.aliveSnakes)):
-                    snakes[self.aliveSnakes[i]].EatAvailableSnack(snacks)
+                self.MakeSnakesEat(snakes, snacks)
 
                 if (self.nbSnakes > 1):
                     self.CheckSnakesCollisions()
                 
                 snacks.Draw(screen)
 
-                if (walls is not None):
-                    walls.Draw(screen)
-
                 for i in range(self.nbSnakes):
                     snakes[i].Draw(screen)
+
+                if (walls is not None):
+                    walls.Draw(screen)
 
                 display.update()
 

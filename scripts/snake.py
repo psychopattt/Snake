@@ -32,7 +32,8 @@ class Snake:
         self.nextDirection = K_RIGHT
         
         self.segments = [startPos]
-        self.nextSegmentPos = [[-1, -1]]
+        self.SetHeadPositionUnavailable()
+        self.nextSegmentPos = [] # If the snake grows, a segment will be added at that position
 
     def SetDirection(self, direction):
         self.nextDirection = direction
@@ -43,24 +44,31 @@ class Snake:
     def GetPositions(self):
         return self.segments
 
+    def GetHeadPosition(self):
+        return self.segments[0]
+
+    def SetHeadPositionUnavailable(self):
+        self.game.RemoveAvailablePos(self.GetHeadPosition())
+
+    def SetNextSegmentPosAvailable(self):
+        self.game.AddAvailablePos(self.nextSegmentPos)
+
     def Grow(self):
         self.segments.append(self.nextSegmentPos)
 
-        if (not self.game.CheckVictory()): # Check if not everything is snake
-            self.game.RemoveAvailablePos(self.nextSegmentPos)
+        if (self.walls is not None):
+            self.walls.Place()
 
-            if (self.walls is not None):
-                self.walls.Place()
-                self.game.CheckVictory() # Check if everything is snake and walls
+        if (self.increaseSpeed):
+            self.game.IncreaseSpeed()
 
-            if (self.increaseSpeed):
-                self.game.IncreaseSpeed()
+        self.game.CheckVictory() # Check if everything is snake and walls
 
-    def EatAvailableSnack(self, snacks):
+    def EatAvailableSnack(self, snacks, snakeHeadsPositions):
         snacksPos = snacks.GetPositions()
 
         for i in range(len(snacksPos)):
-            if (self.segments[0] == snacksPos[i]):
+            if (self.GetHeadPosition() == snacksPos[i]):
                 self.Grow()
 
                 if (not self.gameOver):
@@ -69,13 +77,19 @@ class Snake:
                         availablePosCount = len(availablePos)
                         
                         if (availablePosCount > 5):
+                            self.game.AddAvailablePos(self.GetHeadPosition())
                             selectedPos = list(availablePos[randrange(0, availablePosCount)])
                             self.segments[0] = selectedPos
-                            self.game.RemoveAvailablePos(selectedPos)
+                            self.SetHeadPositionUnavailable()
 
                     snacks.Place(i)
                 
-                break
+                return
+
+        # If the tail is not replaced by a snake head
+        if (self.nextSegmentPos not in snakeHeadsPositions):
+            # No snack eaten, the position reserved for it's next segment is freed
+            self.SetNextSegmentPosAvailable()
 
     def MoveBody(self):
         for i in range(len(self.segments) - 1, 0, -1):
@@ -115,20 +129,26 @@ class Snake:
         elif (self.direction in DIRECTION_LEFT):
             self.segments[0][0] -= 1
 
+        self.SetHeadPositionUnavailable()
+
     def CheckBorderCollide(self):
         if (self.loopAround):
             if (self.segments[0][0] < 0):
                 self.segments[0][0] = self.gridWidth - 1
+                self.SetHeadPositionUnavailable()
             elif (self.segments[0][0] >= self.gridWidth):
                 self.segments[0][0] = 0
+                self.SetHeadPositionUnavailable()
             elif (self.segments[0][1] < 0):
                 self.segments[0][1] = self.gridHeight - 1
+                self.SetHeadPositionUnavailable()
             elif (self.segments[0][1] >= self.gridHeight):
                 self.segments[0][1] = 0
+                self.SetHeadPositionUnavailable()
 
         elif (self.segments[0][0] < 0 or self.segments[0][0] >= self.gridWidth or self.segments[0][1] < 0 or self.segments[0][1] >= self.gridHeight):
             if (self.multipleSnakes):
-                self.game.KillSnake(self.id)
+                self.game.KillSnake(self, True)
             else:
                 self.game.TriggerGameOver(False)
 
@@ -141,14 +161,11 @@ class Snake:
     def CheckWallCollide(self):
         wallsPos = self.walls.GetPositions()
 
-        for i in range(len(wallsPos)):
-            if (self.segments[0] == wallsPos[i]):
-                if (self.multipleSnakes):
-                    self.game.KillSnake(self.id)
-                else:
-                    self.game.TriggerGameOver(False)
-                    
-                break
+        if (self.segments[0] in wallsPos):
+            if (self.multipleSnakes):
+                self.game.KillSnake(self, True)
+            else:
+                self.game.TriggerGameOver(False)
 
     def Move(self):
         self.nextSegmentPos = list(self.segments[-1])

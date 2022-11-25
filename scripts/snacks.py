@@ -9,18 +9,18 @@ class Snacks:
         self.fullRadius = blockSize / 2
         self.radius = (blockSize - blockGap) / 2
         
-        self.snackPos = [[-1, -1]] * nbSnacks
-        self.PlaceAll()
+        self.snackPos = []
+        self.PlaceAll(nbSnacks)
 
-    def PlaceAll(self):
+    def PlaceAll(self, nbSnacks):
         availablePos = self.game.GetAvailablePos()
 
-        for i in range(len(self.snackPos)):
+        for _ in range(nbSnacks):
             availablePosCount = len(availablePos)
 
             if (availablePosCount > 0):
                 selectedPos = list(availablePos[randrange(0, availablePosCount)])
-                self.snackPos[i] = selectedPos
+                self.snackPos.append(selectedPos)
                 availablePos.remove(selectedPos)
             else:
                 break
