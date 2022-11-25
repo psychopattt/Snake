@@ -83,7 +83,7 @@ class Snake:
                         self.SetHeadPositionUnavailable()
 
                 snacks.Place(indexOfEatenSnack)
-                
+
         except ValueError: # No snack was eaten
             # If the tail is not replaced by a snake head
             if (self.nextSegmentPos not in snakeHeadsPositions):
@@ -158,9 +158,7 @@ class Snake:
                 break
 
     def CheckWallCollide(self):
-        wallsPos = self.walls.GetPositions()
-
-        if (self.segments[0] in wallsPos):
+        if (self.GetHeadPosition() in self.walls.GetPositions()):
             if (self.multipleSnakes):
                 self.game.KillSnake(self, True)
             else:
@@ -201,18 +199,24 @@ class Snake:
 
         return [posX, posY, gapX, gapY]
 
-    def Draw(self, screen):
+    def DrawHead(self, screen):
+        # screen, color(r, g, b), rect(posX, posY, width, height)
+        draw.rect(screen, HEAD_COLORS[self.id], (self.segments[0][0] * self.blockSize + self.blockGap, self.segments[0][1] * self.blockSize + self.blockGap, self.blockSize - (self.blockGap * 2), self.blockSize - (self.blockGap * 2)))
+
+    def DrawBodySegment(self, screen, color, posX, posY, segmentOffsets):
+        draw.rect(screen, color, (posX * self.blockSize + segmentOffsets[0], posY * self.blockSize + segmentOffsets[1], self.blockSize - segmentOffsets[2], self.blockSize - segmentOffsets[3]))
+
+    def DrawBody(self, screen):
         if (self.multipleSnakes):
-            # screen, color(r, g, b), rect(posX, posY, width, height) # Draw head
-            draw.rect(screen, HEAD_COLORS[self.id], (self.segments[0][0] * self.blockSize + self.blockGap, self.segments[0][1] * self.blockSize + self.blockGap, self.blockSize - (self.blockGap * 2), self.blockSize - (self.blockGap * 2)))
-
-            for i in range(1, len(self.segments)): # Draw body
+            for i in range(1, len(self.segments)):
                 segmentOffsets = self.ComputeDrawPos(i)
-                draw.rect(screen, HEAD_COLORS[self.id], (self.segments[i][0] * self.blockSize + segmentOffsets[0], self.segments[i][1] * self.blockSize + segmentOffsets[1], self.blockSize - segmentOffsets[2], self.blockSize - segmentOffsets[3]))
+                self.DrawBodySegment(screen, HEAD_COLORS[self.id], self.segments[i][0], self.segments[i][1], segmentOffsets)
         else:
-            draw.rect(screen, HEAD_COLORS[self.id], (self.segments[0][0] * self.blockSize + self.blockGap, self.segments[0][1] * self.blockSize + self.blockGap, self.blockSize - (self.blockGap * 2), self.blockSize - (self.blockGap * 2)))
-
             for i in range(1, len(self.segments)):
                 segmentOffsets = self.ComputeDrawPos(i)
                 color = [channel * 255 for channel in hsv_to_rgb(i / 1440 + 0.291666, 0.85, 0.44)]
-                draw.rect(screen, color, (self.segments[i][0] * self.blockSize + segmentOffsets[0], self.segments[i][1] * self.blockSize + segmentOffsets[1], self.blockSize - segmentOffsets[2], self.blockSize - segmentOffsets[3]))
+                self.DrawBodySegment(screen, color, self.segments[i][0], self.segments[i][1], segmentOffsets)
+
+    def Draw(self, screen):
+        self.DrawHead(screen)
+        self.DrawBody(screen)

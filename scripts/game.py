@@ -55,7 +55,7 @@ class Game:
             self.walls = None
 
         if (increaseSpeed):
-            self.minSpeed = round(frametime / 8)
+            self.minFrametime = round(frametime / 8)
 
         self.controllers = []
 
@@ -218,7 +218,7 @@ class Game:
             snakes[self.aliveSnakes[i]].EatAvailableSnack(snacks, snakeHeadsPositions)
 
     def IncreaseSpeed(self): # Goes up to 8x faster
-        self.frametime = max(self.minSpeed, self.frametime - max(1, round(self.frametime / 50)))
+        self.frametime = max(self.minFrametime, self.frametime - max(1, round(self.frametime / 50)))
         
     def Run(self, screen, clock, snakes, snacks, walls):
         self.playing = True
