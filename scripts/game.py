@@ -95,13 +95,6 @@ class Game:
         self.snakes.append(Snake(id, snakeStartPos, multipleSnakes, snakeParameters))
 
     def CreateMultipleSnakes(self, snakeParameters):
-        # incrementX = floor(self.gridWidth / 4)
-        # incrementY = floor(self.gridHeight / 4)
-
-        # for i in range(self.nbSnakes):
-        #     snakeStartPos = [floor(i / 4) * incrementX, i % 4 * incrementY + 1]
-        #     self.CreateSingleSnake(i, snakeStartPos, True, snakeParameters)
-
         incrementY = self.gridHeight / sqrt(self.nbSnakes)
         incrementX = self.gridWidth / sqrt(self.nbSnakes)
         posX = 0
